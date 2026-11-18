@@ -1,0 +1,10 @@
+{
+  "name": "FortiClient VPN",
+  "version": "7.4.3.6002",
+  "architecture": "x64",
+  "sha256": "94e8d5c28d8167ca2562a865092e31218e2e10c128a022c004983e470eabe1ad",
+  "productCode": "{15C7B361-A0B2-4E79-93E0-868B5000BA3F}",
+  "sourceDownloaderSHA256": "c794ebafba63667785e37b1a1f77d9fdc24111f659d949d61dcb31aabba83c8c",
+  "signature": "Valid Fortinet",
+  "extractedOn": "2026-11-18"
+}
