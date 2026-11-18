@@ -1,0 +1,37 @@
+name: Validate FortiClient MSI as SYSTEM
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original signed MSI
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download forticlient-vpn-7.4.3.6002 --pattern '*.msi' --dir .
+      - name: Install and uninstall as SYSTEM
+        shell: pwsh
+        run: |
+          $script=Join-Path $PWD 'Test-Msi.ps1'
+          $action=New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -ExecutionPolicy Bypass -File "'+$script+'"')
+          $principal=New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+          Register-ScheduledTask -TaskName 'Test-FortiClient-MSI' -Action $action -Principal $principal -Force | Out-Null
+          Start-ScheduledTask -TaskName 'Test-FortiClient-MSI'
+          $deadline=(Get-Date).AddMinutes(14)
+          while (!(Test-Path test-result.json) -and (Get-Date) -lt $deadline) { Start-Sleep 3 }
+          if (!(Test-Path test-result.json)) { throw 'SYSTEM test timed out' }
+          Get-Content test-result.json
+          $result=Get-Content test-result.json -Raw | ConvertFrom-Json
+          if (!$result.success) { throw $result.error }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forticlient-msi-validation
+          path: |
+            test-result.json
+            *.log
